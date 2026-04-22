@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -shared -Wl,-soname,liblibs.so -o liblibs.so CMakeFiles/libs.dir/reader.o CMakeFiles/libs.dir/cal.o CMakeFiles/libs.dir/soga.o 
