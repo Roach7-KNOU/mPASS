@@ -1726,8 +1726,7 @@ void insertClusterSetFinal( int step) {
 
 		int dbscanClustering(std::vector<int> probeIds, double eps, int minPts, int step) {
 			int a,b,c,i,j,k,clusterId= step ;
-			const double nearAtomCutoffSq = 7.7 * 7.7;
-			double distSq;
+			double dist;
 			std::vector <int> g_clusters;
 
 			//printf("REMARK DBSCAN Clustering : g_probes size = %5d, eps = %6.2f, minPts = %3d\t Cluster_id = %3d\n",probeIds.size(), eps, minPts,step);
@@ -1789,8 +1788,7 @@ void insertClusterSetFinal( int step) {
 
 		int dbscanClusteringForSurface(std::vector<int> probeIds, double eps, int minPts) {
 			int a,b,c,i,j,k,clusterId= 0 ;
-			const double nearAtomCutoffSq = 7.7 * 7.7;
-			double distSq;
+			double dist;
 			std::vector <int> g_clusters;
 
 			for(a=0; a < probeIds.size(); a++) {
