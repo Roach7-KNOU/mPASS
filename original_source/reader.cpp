@@ -1,12 +1,11 @@
 #include "pass.h"
 #include "reader.h"
-#include <memory>
 
 using namespace std;
 
 /* Read protein atom from PDB file */
 void readPdbFile(ifstream& ifs) {
-    const size_t kInitialResidueCapacity = 64;
+    const size_t kInitialVectorCapacity = 64;
     string buffer, strKey, tempResidueName;
     int residueIdx = 0, tempResidueNumber = 9999, realResidueNumber, residueSize = 0, atomSerial = -1;
     double sumX = 0, sumY = 0, sumZ = 0, tempDist = 0, maxDist = 0;
@@ -17,8 +16,8 @@ void readPdbFile(ifstream& ifs) {
 
     map<string, int>::iterator itChain;
     AtomPropertyMap::iterator itProp;
-    residueAtoms.reserve(kInitialResidueCapacity);
-    atomNumbers.reserve(kInitialResidueCapacity);
+    residueAtoms.reserve(kInitialVectorCapacity);
+    atomNumbers.reserve(kInitialVectorCapacity);
 
     while (getline(ifs, buffer)) {
         if (buffer.compare(0, 4, "ATOM") == 0 || buffer.compare(0, 6, "HETATM") == 0) {
@@ -39,7 +38,7 @@ void readPdbFile(ifstream& ifs) {
             itProp = g_atomPropertyMap.find(strKey);
 
             if (itProp != g_atomPropertyMap.end()) {
-                std::unique_ptr<Atom> tempAtom = std::make_unique<Atom>();
+                Atom* tempAtom = new Atom;
                 tempAtom->serialNumber = atoi(buffer.substr(6, 5).c_str());
                 tempAtom->atomName = atomName;
                 tempAtom->chain = chain;
@@ -120,7 +119,7 @@ void readPdbFile(ifstream& ifs) {
                     residueSize = 1;
                 }
                 tempAtom->residueNumber = residueIdx;
-                g_proteinAtoms.push_back(tempAtom.release());
+                g_proteinAtoms.push_back(tempAtom);
 
             } else {
                 //cout << "REMARK  ERROR : " << strKey << endl;
