@@ -5,8 +5,7 @@ using namespace std;
 
 /* Read protein atom from PDB file */
 void readPdbFile(ifstream& ifs) {
-    string buffer, tempBuffer, strKey, tempResidueName;
-    Atom* tempAtom;
+    string buffer, strKey, tempResidueName;
     int residueIdx = 0, tempResidueNumber = 9999, realResidueNumber, residueSize = 0, atomSerial = -1;
     double sumX = 0, sumY = 0, sumZ = 0, tempDist = 0, maxDist = 0;
     vector<Vector3> residueAtoms;
@@ -14,36 +13,34 @@ void readPdbFile(ifstream& ifs) {
     Vector3 tempCoord;
     Residue* residueProp;
 
-    map<string, int>::iterator itChain;
     AtomPropertyMap::iterator itProp;
+    residueAtoms.reserve(64);
+    atomNumbers.reserve(64);
 
     while (getline(ifs, buffer)) {
-        tempBuffer = buffer;
-        tempAtom = new Atom;
-        
-        if (tempBuffer.substr(0, 4).compare("ATOM") == 0 || tempBuffer.substr(0, 6).compare("HETATM") == 0) {
-            tempAtom->serialNumber = atoi(tempBuffer.substr(6, 5).c_str());
-            tempAtom->atomName = trim(tempBuffer.substr(12, 4));
-            tempAtom->chain = tempBuffer.substr(21, 1);
+        if (buffer.compare(0, 4, "ATOM") == 0 || buffer.compare(0, 6, "HETATM") == 0) {
+            const string atomName = trim(buffer.substr(12, 4));
+            const string chain = buffer.substr(21, 1);
+            const string residueName = buffer.substr(17, 3);
 
-            g_chainList.push_back(tempAtom->chain);
-            itChain = g_chainSizeMap.find(tempAtom->chain);
-            if (itChain == g_chainSizeMap.end()) {
-                g_chainSizeMap[tempAtom->chain] = 1;
-            } else {
-                itChain->second++;
-            }
-            tempAtom->residueName = tempBuffer.substr(17, 3);
-            strKey = tempAtom->residueName + "-" + tempAtom->atomName;
+            g_chainList.push_back(chain);
+            ++g_chainSizeMap[chain];
+
+            strKey = residueName + "-" + atomName;
 
             itProp = g_atomPropertyMap.find(strKey);
 
             if (itProp != g_atomPropertyMap.end()) {
-                tempAtom->residueIdx = atoi(tempBuffer.substr(22, 4).c_str());
+                Atom* tempAtom = new Atom;
+                tempAtom->serialNumber = atoi(buffer.substr(6, 5).c_str());
+                tempAtom->atomName = atomName;
+                tempAtom->chain = chain;
+                tempAtom->residueName = residueName;
+                tempAtom->residueIdx = atoi(buffer.substr(22, 4).c_str());
                 realResidueNumber = tempAtom->residueIdx;
-                tempAtom->point.x = atof(tempBuffer.substr(30, 8).c_str());
-                tempAtom->point.y = atof(tempBuffer.substr(38, 8).c_str());
-                tempAtom->point.z = atof(tempBuffer.substr(46, 8).c_str());
+                tempAtom->point.x = atof(buffer.substr(30, 8).c_str());
+                tempAtom->point.y = atof(buffer.substr(38, 8).c_str());
+                tempAtom->point.z = atof(buffer.substr(46, 8).c_str());
             
                 tempAtom->vdwRadius = (itProp->second)->vdwRadius;
                 tempAtom->isPolar = (itProp->second)->isPolar;
@@ -148,18 +145,17 @@ void readPdbFile(ifstream& ifs) {
 
 /* Read atom property */
 void readAtomPropertyFile(ifstream& ifs) {
-    string buffer, tempBuffer, strKey;
+    string buffer, strKey;
     AtomProperty* tempProp;
     while (getline(ifs, buffer)) {
-        tempBuffer = buffer;
         tempProp = new AtomProperty;
-        tempProp->residueName = tempBuffer.substr(0, 3);
-        tempProp->atomName = trim(tempBuffer.substr(4, 4));
-        tempProp->atomType = trim(tempBuffer.substr(9, 2));
-        tempProp->charge = atof(tempBuffer.substr(11, 6).c_str());
-        tempProp->vdwRadius = atof(tempBuffer.substr(20, 5).c_str());
-        tempProp->isPolar = atoi(tempBuffer.substr(27, 1).c_str());
-        tempProp->standardResidueName = trim(tempBuffer.substr(29, 3).c_str());
+        tempProp->residueName = buffer.substr(0, 3);
+        tempProp->atomName = trim(buffer.substr(4, 4));
+        tempProp->atomType = trim(buffer.substr(9, 2));
+        tempProp->charge = atof(buffer.substr(11, 6).c_str());
+        tempProp->vdwRadius = atof(buffer.substr(20, 5).c_str());
+        tempProp->isPolar = atoi(buffer.substr(27, 1).c_str());
+        tempProp->standardResidueName = trim(buffer.substr(29, 3).c_str());
 
         strKey = tempProp->residueName + "-" + tempProp->atomName;
         if (!g_atomPropertyMap.insert(AtomPropertyMap::value_type(strKey, tempProp)).second) {
@@ -170,19 +166,18 @@ void readAtomPropertyFile(ifstream& ifs) {
 
 /* Read grid property */
 void readGridPropertyFile(ifstream& ifs) {
-    string buffer, tempBuffer;
+    string buffer;
     GridProperty* tempProp;
     while (getline(ifs, buffer)) {
-        tempBuffer = buffer;
         tempProp = new GridProperty;
-        tempProp->gridIndex[0] = atoi(tempBuffer.substr(0, 3).c_str());
-        tempProp->gridIndex[1] = atoi(tempBuffer.substr(3, 3).c_str());
-        tempProp->gridIndex[2] = atoi(tempBuffer.substr(6, 3).c_str());
-        tempProp->gridProperty[0] = atoi(tempBuffer.substr(9, 2).c_str());
-        tempProp->gridProperty[1] = atoi(tempBuffer.substr(11, 2).c_str());
-        tempProp->gridProperty[2] = atoi(tempBuffer.substr(13, 2).c_str());
-        tempProp->max = atof(tempBuffer.substr(15, 7).c_str());
-        tempProp->min = atof(tempBuffer.substr(22, 7).c_str());
+        tempProp->gridIndex[0] = atoi(buffer.substr(0, 3).c_str());
+        tempProp->gridIndex[1] = atoi(buffer.substr(3, 3).c_str());
+        tempProp->gridIndex[2] = atoi(buffer.substr(6, 3).c_str());
+        tempProp->gridProperty[0] = atoi(buffer.substr(9, 2).c_str());
+        tempProp->gridProperty[1] = atoi(buffer.substr(11, 2).c_str());
+        tempProp->gridProperty[2] = atoi(buffer.substr(13, 2).c_str());
+        tempProp->max = atof(buffer.substr(15, 7).c_str());
+        tempProp->min = atof(buffer.substr(22, 7).c_str());
         g_gridProperties.push_back(tempProp);
     }
 }
