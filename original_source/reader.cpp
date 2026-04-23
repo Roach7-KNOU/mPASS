@@ -6,6 +6,7 @@ using namespace std;
 
 /* Read protein atom from PDB file */
 void readPdbFile(ifstream& ifs) {
+    const size_t kInitialResidueCapacity = 64;
     string buffer, strKey, tempResidueName;
     int residueIdx = 0, tempResidueNumber = 9999, realResidueNumber, residueSize = 0, atomSerial = -1;
     double sumX = 0, sumY = 0, sumZ = 0, tempDist = 0, maxDist = 0;
@@ -16,8 +17,8 @@ void readPdbFile(ifstream& ifs) {
 
     map<string, int>::iterator itChain;
     AtomPropertyMap::iterator itProp;
-    residueAtoms.reserve(64);
-    atomNumbers.reserve(64);
+    residueAtoms.reserve(kInitialResidueCapacity);
+    atomNumbers.reserve(kInitialResidueCapacity);
 
     while (getline(ifs, buffer)) {
         if (buffer.compare(0, 4, "ATOM") == 0 || buffer.compare(0, 6, "HETATM") == 0) {
@@ -38,7 +39,7 @@ void readPdbFile(ifstream& ifs) {
             itProp = g_atomPropertyMap.find(strKey);
 
             if (itProp != g_atomPropertyMap.end()) {
-                std::unique_ptr<Atom> tempAtom(new Atom);
+                std::unique_ptr<Atom> tempAtom = std::make_unique<Atom>();
                 tempAtom->serialNumber = atoi(buffer.substr(6, 5).c_str());
                 tempAtom->atomName = atomName;
                 tempAtom->chain = chain;
