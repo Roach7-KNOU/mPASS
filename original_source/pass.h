@@ -241,6 +241,45 @@ struct Cluster {
 	int isOccluded;
 };
 
+struct ProbePropertySnapshot {
+	int index;
+	int serialNumber;
+	string type;
+	double x;
+	double y;
+	double z;
+	double radius;
+	double charge;
+	int isPolar;
+	int isSurvived;
+	int clusterId;
+	int clusterId1;
+	int clusterId2;
+	int clusterId3;
+	int numLayer;
+	int density;
+	int density1;
+	int density2;
+	int step;
+	int numBc1;
+	double numBc2;
+	int numBc3;
+	int numBc4;
+	int numBc5;
+	double numBcProbe;
+	double numBcProbeTotal;
+	double bcPercent;
+	double numWtBcNum;
+	double closestDist;
+	double closestProbeDist;
+	double averageDist;
+	int averageNum;
+	int closestAtom;
+	vector<int> contactAtoms;
+	vector<int> nearProbes;
+	vector<int> nearAtoms;
+};
+
 typedef map<string, AtomProperty*> AtomPropertyMap;
 extern AtomPropertyMap g_atomPropertyMap;
 
@@ -367,6 +406,8 @@ void appendCluster();
 AtomProperty* getCharge(vector<AtomProperty*>& atomProps, string residueName, string atomName);
 
 void calculateProbeBc();
+ProbePropertySnapshot extractProbeProperty(const Probe* probe, int index);
+void saveProbePropertiesToJson(const string& outputPath);
 void usage();
 void help();
 

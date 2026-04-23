@@ -1,6 +1,38 @@
 #include "pass.h"
 #include "cal.h"
 
+namespace {
+	string escapeJsonString(const string& input) {
+		string escaped;
+		escaped.reserve(input.size());
+		for (size_t i = 0; i < input.size(); ++i) {
+			const char ch = input[i];
+			switch (ch) {
+				case '\"': escaped += "\\\""; break;
+				case '\\': escaped += "\\\\"; break;
+				case '\b': escaped += "\\b"; break;
+				case '\f': escaped += "\\f"; break;
+				case '\n': escaped += "\\n"; break;
+				case '\r': escaped += "\\r"; break;
+				case '\t': escaped += "\\t"; break;
+				default: escaped += ch; break;
+			}
+		}
+		return escaped;
+	}
+
+	void writeIntArrayJson(ofstream& ofs, const vector<int>& values) {
+		ofs << "[";
+		for (size_t i = 0; i < values.size(); ++i) {
+			if (i > 0) {
+				ofs << ",";
+			}
+			ofs << values[i];
+		}
+		ofs << "]";
+	}
+}
+
 
 
 
@@ -2314,6 +2346,109 @@ void insertClusterSetFinal( int step) {
 			//	printf("GETRIPLE : %8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f\n",Ri.x,Ri.y,Ri.z,Rj.x,Rj.y,Rj.z,Rk.x,Rk.y,Rk.z,sgmi,sgmj,sgmk,sgmp);
 			return TRUE;
 
+		}
+
+		ProbePropertySnapshot extractProbeProperty(const Probe* probe, int index) {
+			ProbePropertySnapshot snapshot;
+			snapshot.index = index;
+			snapshot.serialNumber = probe->serialNumber;
+			snapshot.type = probe->type;
+			snapshot.x = probe->point.x;
+			snapshot.y = probe->point.y;
+			snapshot.z = probe->point.z;
+			snapshot.radius = probe->radius;
+			snapshot.charge = probe->charge;
+			snapshot.isPolar = probe->isPolar;
+			snapshot.isSurvived = probe->isSurvived;
+			snapshot.clusterId = probe->clusterId;
+			snapshot.clusterId1 = probe->clusterId1;
+			snapshot.clusterId2 = probe->clusterId2;
+			snapshot.clusterId3 = probe->clusterId3;
+			snapshot.numLayer = probe->numLayer;
+			snapshot.density = probe->density;
+			snapshot.density1 = probe->density1;
+			snapshot.density2 = probe->density2;
+			snapshot.step = probe->step;
+			snapshot.numBc1 = probe->numBc1;
+			snapshot.numBc2 = probe->numBc2;
+			snapshot.numBc3 = probe->numBc3;
+			snapshot.numBc4 = probe->numBc4;
+			snapshot.numBc5 = probe->numBc5;
+			snapshot.numBcProbe = probe->numBcProbe;
+			snapshot.numBcProbeTotal = probe->numBcProbeTotal;
+			snapshot.bcPercent = probe->bcPercent;
+			snapshot.numWtBcNum = probe->numWtBcNum;
+			snapshot.closestDist = probe->closestDist;
+			snapshot.closestProbeDist = probe->closestProbeDist;
+			snapshot.averageDist = probe->averageDist;
+			snapshot.averageNum = probe->averageNum;
+			snapshot.closestAtom = probe->closestAtom;
+			snapshot.contactAtoms = probe->contactAtoms;
+			snapshot.nearProbes = probe->nearProbes;
+			snapshot.nearAtoms = probe->nearAtoms;
+			return snapshot;
+		}
+
+		void saveProbePropertiesToJson(const string& outputPath) {
+			ofstream ofs(outputPath.c_str());
+			if (!ofs) {
+				return;
+			}
+
+			vector<ProbePropertySnapshot> snapshots;
+			snapshots.reserve(g_probes.size());
+
+			for (size_t i = 0; i < g_probes.size(); ++i) {
+				snapshots.push_back(extractProbeProperty(g_probes[i], static_cast<int>(i)));
+			}
+
+			ofs << "{\"probeCount\":" << snapshots.size() << ",\"probes\":[";
+			for (size_t i = 0; i < snapshots.size(); ++i) {
+				const ProbePropertySnapshot& probe = snapshots[i];
+				if (i > 0) {
+					ofs << ",";
+				}
+				ofs << "{";
+				ofs << "\"index\":" << probe.index;
+				ofs << ",\"serialNumber\":" << probe.serialNumber;
+				ofs << ",\"type\":\"" << escapeJsonString(probe.type) << "\"";
+				ofs << ",\"point\":{\"x\":" << probe.x << ",\"y\":" << probe.y << ",\"z\":" << probe.z << "}";
+				ofs << ",\"radius\":" << probe.radius;
+				ofs << ",\"charge\":" << probe.charge;
+				ofs << ",\"isPolar\":" << probe.isPolar;
+				ofs << ",\"isSurvived\":" << probe.isSurvived;
+				ofs << ",\"clusterId\":" << probe.clusterId;
+				ofs << ",\"clusterId1\":" << probe.clusterId1;
+				ofs << ",\"clusterId2\":" << probe.clusterId2;
+				ofs << ",\"clusterId3\":" << probe.clusterId3;
+				ofs << ",\"numLayer\":" << probe.numLayer;
+				ofs << ",\"density\":" << probe.density;
+				ofs << ",\"density1\":" << probe.density1;
+				ofs << ",\"density2\":" << probe.density2;
+				ofs << ",\"step\":" << probe.step;
+				ofs << ",\"numBc1\":" << probe.numBc1;
+				ofs << ",\"numBc2\":" << probe.numBc2;
+				ofs << ",\"numBc3\":" << probe.numBc3;
+				ofs << ",\"numBc4\":" << probe.numBc4;
+				ofs << ",\"numBc5\":" << probe.numBc5;
+				ofs << ",\"numBcProbe\":" << probe.numBcProbe;
+				ofs << ",\"numBcProbeTotal\":" << probe.numBcProbeTotal;
+				ofs << ",\"bcPercent\":" << probe.bcPercent;
+				ofs << ",\"numWtBcNum\":" << probe.numWtBcNum;
+				ofs << ",\"closestDist\":" << probe.closestDist;
+				ofs << ",\"closestProbeDist\":" << probe.closestProbeDist;
+				ofs << ",\"averageDist\":" << probe.averageDist;
+				ofs << ",\"averageNum\":" << probe.averageNum;
+				ofs << ",\"closestAtom\":" << probe.closestAtom;
+				ofs << ",\"contactAtoms\":";
+				writeIntArrayJson(ofs, probe.contactAtoms);
+				ofs << ",\"nearProbes\":";
+				writeIntArrayJson(ofs, probe.nearProbes);
+				ofs << ",\"nearAtoms\":";
+				writeIntArrayJson(ofs, probe.nearAtoms);
+				ofs << "}";
+			}
+			ofs << "]}";
 		}
 
 		void displayProbeAtom() {

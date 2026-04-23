@@ -41,11 +41,10 @@ double g_top10Mean, g_quartile,g_bcCutoff;
 double g_bcCutoffRatioG;
 
 int main(int argc, char *argv[]) {
-	int count,probe_num,probe_num_before;
+	int count,probe_num;
 	ifstream ifs, ifs_atom, ifs_grid; 
-	string filename,temp,temp2;
+	string filename;
 	clock_t begin,end,start;
-	double ratio;
 
 	if( argc < 2) { 
 		usage();
@@ -152,9 +151,9 @@ int main(int argc, char *argv[]) {
 	end = clock();
 	printf("REMARK [%5.2fs] Total Execution time for %5d Protein Atoms\n",((double)(end-start)) / CLOCKS_PER_SEC,g_proteinAtoms.size() );
 	displayProbeAtom();
+	saveProbePropertiesToJson("probe_properties.json");
 }
 
 void usage() {
 	cout << "Usage : " << endl;
 }
-
