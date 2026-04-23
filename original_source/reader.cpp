@@ -1,5 +1,6 @@
 #include "pass.h"
 #include "reader.h"
+#include <memory>
 
 using namespace std;
 
@@ -13,6 +14,7 @@ void readPdbFile(ifstream& ifs) {
     Vector3 tempCoord;
     Residue* residueProp;
 
+    map<string, int>::iterator itChain;
     AtomPropertyMap::iterator itProp;
     residueAtoms.reserve(64);
     atomNumbers.reserve(64);
@@ -24,14 +26,19 @@ void readPdbFile(ifstream& ifs) {
             const string residueName = buffer.substr(17, 3);
 
             g_chainList.push_back(chain);
-            ++g_chainSizeMap[chain];
+            itChain = g_chainSizeMap.find(chain);
+            if (itChain == g_chainSizeMap.end()) {
+                g_chainSizeMap[chain] = 1;
+            } else {
+                itChain->second++;
+            }
 
             strKey = residueName + "-" + atomName;
 
             itProp = g_atomPropertyMap.find(strKey);
 
             if (itProp != g_atomPropertyMap.end()) {
-                Atom* tempAtom = new Atom;
+                std::unique_ptr<Atom> tempAtom(new Atom);
                 tempAtom->serialNumber = atoi(buffer.substr(6, 5).c_str());
                 tempAtom->atomName = atomName;
                 tempAtom->chain = chain;
@@ -112,7 +119,7 @@ void readPdbFile(ifstream& ifs) {
                     residueSize = 1;
                 }
                 tempAtom->residueNumber = residueIdx;
-                g_proteinAtoms.push_back(tempAtom);
+                g_proteinAtoms.push_back(tempAtom.release());
 
             } else {
                 //cout << "REMARK  ERROR : " << strKey << endl;
