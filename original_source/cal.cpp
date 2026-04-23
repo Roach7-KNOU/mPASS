@@ -1,5 +1,7 @@
 #include "pass.h"
 #include "cal.h"
+#include <cerrno>
+#include <cstring>
 
 namespace {
 	string escapeJsonString(const string& input) {
@@ -2390,58 +2392,62 @@ void insertClusterSetFinal( int step) {
 		bool saveProbePropertiesToJson(const string& outputPath) {
 			ofstream ofs(outputPath.c_str());
 			if (!ofs) {
-				cerr << "Pass: failed to write probe properties json '" << outputPath << "'." << endl;
+				cerr << "Pass: failed to write probe properties json '" << outputPath << "': " << strerror(errno) << endl;
 				return false;
 			}
 
 			ofs << "{\"probeCount\":" << g_probes.size() << ",\"probes\":[";
-			ProbePropertySnapshot probe;
+			ProbePropertySnapshot snapshot;
 			for (size_t i = 0; i < g_probes.size(); ++i) {
-				extractProbeProperty(g_probes[i], static_cast<int>(i), probe);
+				extractProbeProperty(g_probes[i], static_cast<int>(i), snapshot);
 				if (i > 0) {
 					ofs << ",";
 				}
 				ofs << "{";
-				ofs << "\"index\":" << probe.index;
-				ofs << ",\"serialNumber\":" << probe.serialNumber;
-				ofs << ",\"type\":\"" << escapeJsonString(probe.type) << "\"";
-				ofs << ",\"point\":{\"x\":" << probe.x << ",\"y\":" << probe.y << ",\"z\":" << probe.z << "}";
-				ofs << ",\"radius\":" << probe.radius;
-				ofs << ",\"charge\":" << probe.charge;
-				ofs << ",\"isPolar\":" << probe.isPolar;
-				ofs << ",\"isSurvived\":" << probe.isSurvived;
-				ofs << ",\"clusterId\":" << probe.clusterId;
-				ofs << ",\"clusterId1\":" << probe.clusterId1;
-				ofs << ",\"clusterId2\":" << probe.clusterId2;
-				ofs << ",\"clusterId3\":" << probe.clusterId3;
-				ofs << ",\"numLayer\":" << probe.numLayer;
-				ofs << ",\"density\":" << probe.density;
-				ofs << ",\"density1\":" << probe.density1;
-				ofs << ",\"density2\":" << probe.density2;
-				ofs << ",\"step\":" << probe.step;
-				ofs << ",\"numBc1\":" << probe.numBc1;
-				ofs << ",\"numBc2\":" << probe.numBc2;
-				ofs << ",\"numBc3\":" << probe.numBc3;
-				ofs << ",\"numBc4\":" << probe.numBc4;
-				ofs << ",\"numBc5\":" << probe.numBc5;
-				ofs << ",\"numBcProbe\":" << probe.numBcProbe;
-				ofs << ",\"numBcProbeTotal\":" << probe.numBcProbeTotal;
-				ofs << ",\"bcPercent\":" << probe.bcPercent;
-				ofs << ",\"numWtBcNum\":" << probe.numWtBcNum;
-				ofs << ",\"closestDist\":" << probe.closestDist;
-				ofs << ",\"closestProbeDist\":" << probe.closestProbeDist;
-				ofs << ",\"averageDist\":" << probe.averageDist;
-				ofs << ",\"averageNum\":" << probe.averageNum;
-				ofs << ",\"closestAtom\":" << probe.closestAtom;
+				ofs << "\"index\":" << snapshot.index;
+				ofs << ",\"serialNumber\":" << snapshot.serialNumber;
+				ofs << ",\"type\":\"" << escapeJsonString(snapshot.type) << "\"";
+				ofs << ",\"point\":{\"x\":" << snapshot.x << ",\"y\":" << snapshot.y << ",\"z\":" << snapshot.z << "}";
+				ofs << ",\"radius\":" << snapshot.radius;
+				ofs << ",\"charge\":" << snapshot.charge;
+				ofs << ",\"isPolar\":" << snapshot.isPolar;
+				ofs << ",\"isSurvived\":" << snapshot.isSurvived;
+				ofs << ",\"clusterId\":" << snapshot.clusterId;
+				ofs << ",\"clusterId1\":" << snapshot.clusterId1;
+				ofs << ",\"clusterId2\":" << snapshot.clusterId2;
+				ofs << ",\"clusterId3\":" << snapshot.clusterId3;
+				ofs << ",\"numLayer\":" << snapshot.numLayer;
+				ofs << ",\"density\":" << snapshot.density;
+				ofs << ",\"density1\":" << snapshot.density1;
+				ofs << ",\"density2\":" << snapshot.density2;
+				ofs << ",\"step\":" << snapshot.step;
+				ofs << ",\"numBc1\":" << snapshot.numBc1;
+				ofs << ",\"numBc2\":" << snapshot.numBc2;
+				ofs << ",\"numBc3\":" << snapshot.numBc3;
+				ofs << ",\"numBc4\":" << snapshot.numBc4;
+				ofs << ",\"numBc5\":" << snapshot.numBc5;
+				ofs << ",\"numBcProbe\":" << snapshot.numBcProbe;
+				ofs << ",\"numBcProbeTotal\":" << snapshot.numBcProbeTotal;
+				ofs << ",\"bcPercent\":" << snapshot.bcPercent;
+				ofs << ",\"numWtBcNum\":" << snapshot.numWtBcNum;
+				ofs << ",\"closestDist\":" << snapshot.closestDist;
+				ofs << ",\"closestProbeDist\":" << snapshot.closestProbeDist;
+				ofs << ",\"averageDist\":" << snapshot.averageDist;
+				ofs << ",\"averageNum\":" << snapshot.averageNum;
+				ofs << ",\"closestAtom\":" << snapshot.closestAtom;
 				ofs << ",\"contactAtoms\":";
-				writeIntArrayJson(ofs, probe.contactAtoms);
+				writeIntArrayJson(ofs, snapshot.contactAtoms);
 				ofs << ",\"nearProbes\":";
-				writeIntArrayJson(ofs, probe.nearProbes);
+				writeIntArrayJson(ofs, snapshot.nearProbes);
 				ofs << ",\"nearAtoms\":";
-				writeIntArrayJson(ofs, probe.nearAtoms);
+				writeIntArrayJson(ofs, snapshot.nearAtoms);
 				ofs << "}";
 			}
 			ofs << "]}";
+			if (!ofs) {
+				cerr << "Pass: failed while writing probe properties json '" << outputPath << "'." << endl;
+				return false;
+			}
 			return true;
 		}
 
