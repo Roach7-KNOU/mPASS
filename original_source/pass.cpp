@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 	printf("REMARK [%5.2fs] Total Execution time for %5d Protein Atoms\n",((double)(end-start)) / CLOCKS_PER_SEC,g_proteinAtoms.size() );
 	displayProbeAtom();
 	if (!saveProbePropertiesToJson("probe_properties.json")) {
-		cerr << "REMARK probe properties json export failed." << endl;
+		cerr << "ERROR: probe properties json export failed." << endl;
 	}
 }
 
