@@ -2389,22 +2389,16 @@ void insertClusterSetFinal( int step) {
 			return snapshot;
 		}
 
-		void saveProbePropertiesToJson(const string& outputPath) {
+		bool saveProbePropertiesToJson(const string& outputPath) {
 			ofstream ofs(outputPath.c_str());
 			if (!ofs) {
-				return;
+				cerr << "Pass: failed to write probe properties json '" << outputPath << "'." << endl;
+				return false;
 			}
 
-			vector<ProbePropertySnapshot> snapshots;
-			snapshots.reserve(g_probes.size());
-
+			ofs << "{\"probeCount\":" << g_probes.size() << ",\"probes\":[";
 			for (size_t i = 0; i < g_probes.size(); ++i) {
-				snapshots.push_back(extractProbeProperty(g_probes[i], static_cast<int>(i)));
-			}
-
-			ofs << "{\"probeCount\":" << snapshots.size() << ",\"probes\":[";
-			for (size_t i = 0; i < snapshots.size(); ++i) {
-				const ProbePropertySnapshot& probe = snapshots[i];
+				const ProbePropertySnapshot probe = extractProbeProperty(g_probes[i], static_cast<int>(i));
 				if (i > 0) {
 					ofs << ",";
 				}
@@ -2449,6 +2443,7 @@ void insertClusterSetFinal( int step) {
 				ofs << "}";
 			}
 			ofs << "]}";
+			return true;
 		}
 
 		void displayProbeAtom() {

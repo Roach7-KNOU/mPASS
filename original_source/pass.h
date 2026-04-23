@@ -407,7 +407,7 @@ AtomProperty* getCharge(vector<AtomProperty*>& atomProps, string residueName, st
 
 void calculateProbeBc();
 ProbePropertySnapshot extractProbeProperty(const Probe* probe, int index);
-void saveProbePropertiesToJson(const string& outputPath);
+bool saveProbePropertiesToJson(const string& outputPath);
 void usage();
 void help();
 
