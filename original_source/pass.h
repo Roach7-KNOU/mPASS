@@ -406,7 +406,7 @@ void appendCluster();
 AtomProperty* getCharge(vector<AtomProperty*>& atomProps, string residueName, string atomName);
 
 void calculateProbeBc();
-ProbePropertySnapshot extractProbeProperty(const Probe* probe, int index);
+void extractProbeProperty(const Probe* probe, int index, ProbePropertySnapshot& snapshot);
 bool saveProbePropertiesToJson(const string& outputPath);
 void usage();
 void help();

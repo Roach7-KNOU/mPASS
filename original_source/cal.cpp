@@ -2348,8 +2348,7 @@ void insertClusterSetFinal( int step) {
 
 		}
 
-		ProbePropertySnapshot extractProbeProperty(const Probe* probe, int index) {
-			ProbePropertySnapshot snapshot;
+		void extractProbeProperty(const Probe* probe, int index, ProbePropertySnapshot& snapshot) {
 			snapshot.index = index;
 			snapshot.serialNumber = probe->serialNumber;
 			snapshot.type = probe->type;
@@ -2386,7 +2385,6 @@ void insertClusterSetFinal( int step) {
 			snapshot.contactAtoms = probe->contactAtoms;
 			snapshot.nearProbes = probe->nearProbes;
 			snapshot.nearAtoms = probe->nearAtoms;
-			return snapshot;
 		}
 
 		bool saveProbePropertiesToJson(const string& outputPath) {
@@ -2397,8 +2395,9 @@ void insertClusterSetFinal( int step) {
 			}
 
 			ofs << "{\"probeCount\":" << g_probes.size() << ",\"probes\":[";
+			ProbePropertySnapshot probe;
 			for (size_t i = 0; i < g_probes.size(); ++i) {
-				const ProbePropertySnapshot probe = extractProbeProperty(g_probes[i], static_cast<int>(i));
+				extractProbeProperty(g_probes[i], static_cast<int>(i), probe);
 				if (i > 0) {
 					ofs << ",";
 				}
