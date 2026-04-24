@@ -1239,7 +1239,8 @@ void insertClusterSetFinal( int step) {
 			PairDistMap::iterator pairIter;
 
 			clock_t begin,end;
-			double dist;
+			const double nearProbeCutoffSq = 1.5 * 1.5;
+			double distSq;
 
 			g_probePairMap.clear();
 			for ( int i=0; i < g_probeCellList.size() ; i++) {
@@ -1251,8 +1252,8 @@ void insertClusterSetFinal( int step) {
 							if(g_cells[newCellId]->probes.size() >0) { 
 
 								for(int l=0; l < g_cells[newCellId]->probes.size(); l++) {
-									dist = vsDist(pAtom(g_cells[g_probeCellList[i]]->probes[j]),pAtom(g_cells[newCellId]->probes[l]));
-									if(g_cells[g_probeCellList[i]]->probes[j] != g_cells[newCellId]->probes[l] && dist > 0 && dist < 1.5) // for clustering (dist 1.5A and 0.7)
+									distSq = vsDistSq(pAtom(g_cells[g_probeCellList[i]]->probes[j]),pAtom(g_cells[newCellId]->probes[l]));
+									if(g_cells[g_probeCellList[i]]->probes[j] != g_cells[newCellId]->probes[l] && distSq > 0 && distSq < nearProbeCutoffSq) // for clustering (dist 1.5A and 0.7)
 										g_probes[g_cells[g_probeCellList[i]]->probes[j]]->nearProbes.push_back(g_cells[newCellId]->probes[l]);
 								}
 							}
@@ -1269,7 +1270,8 @@ void insertClusterSetFinal( int step) {
 
 			vector<int>::iterator it;
 
-			double dist;
+			const double nearAtomProbeCutoffSq = 5.2 * 5.2;
+			double distSq;
 			for ( int i=0; i < g_atomCellList.size() ; i++) {
 				for(int j=0; j < g_cells[g_atomCellList[i]]->atoms.size(); j++) {
 					for(int k=0; k< 275; k++) { // minimun distance < 5.66
@@ -1277,8 +1279,8 @@ void insertClusterSetFinal( int step) {
 						if(newCellId >-1 && newCellId < g_gridMaxX*g_gridMaxY*g_gridMaxZ)
 							if(g_cells[newCellId]->probes.size() >0) { 
 								for(int l=0; l < g_cells[newCellId]->probes.size(); l++) {
-									dist = vsDist(prAtom(g_cells[g_atomCellList[i]]->atoms[j]),pAtom(g_cells[newCellId]->probes[l]));
-									if(dist <= 5.2){ // g_probes-protein 3.8A + g_probes-g_probes 1.4A
+									distSq = vsDistSq(prAtom(g_cells[g_atomCellList[i]]->atoms[j]),pAtom(g_cells[newCellId]->probes[l]));
+									if(distSq <= nearAtomProbeCutoffSq){ // g_probes-protein 3.8A + g_probes-g_probes 1.4A
 										g_proteinAtoms[g_cells[g_atomCellList[i]]->atoms[j]]->nearProbes.push_back(g_cells[newCellId]->probes[l]);
 										//								cout << "OK" << endl;
 									}
@@ -1351,7 +1353,8 @@ void insertClusterSetFinal( int step) {
 			PairDistMap::iterator pairIter;
 
 			clock_t begin,end;
-			double dist;
+			const double nearProbeCutoffSq = 2.8 * 2.8;
+			double distSq;
 
 			for ( int i=0; i < probeIds.size() ; i++) {
 				g_probes[probeIds[i]]->nearProbes.clear();
@@ -1361,8 +1364,8 @@ void insertClusterSetFinal( int step) {
 					if(newCellId >-1 && newCellId < g_gridMaxX*g_gridMaxY*g_gridMaxZ) {
 						if(g_cells[newCellId]->probes.size() >0) { 
 							for(int l=0; l < g_cells[newCellId]->probes.size(); l++) {
-								dist = vsDist(pAtom(probeIds[i]),pAtom(g_cells[newCellId]->probes[l]));
-								if(dist <= 2.80)
+								distSq = vsDistSq(pAtom(probeIds[i]),pAtom(g_cells[newCellId]->probes[l]));
+								if(distSq <= nearProbeCutoffSq)
 									g_probes[probeIds[i]]->nearProbes.push_back(g_cells[newCellId]->probes[l]);
 							}
 						}
@@ -1379,7 +1382,8 @@ void insertClusterSetFinal( int step) {
 			int probePairKey;
 			PairDistMap::iterator pairIter;
 
-			double dist;
+			const double nearProbeCutoffSq = 2.8 * 2.8;
+			double distSq;
 
 			for(int i=0; i< probeList.size(); i++) {
 				nProbeID = probeList[i];
@@ -1390,8 +1394,8 @@ void insertClusterSetFinal( int step) {
 					if(newCellId >-1 && newCellId < g_gridMaxX*g_gridMaxY*g_gridMaxZ) {
 						if(g_cells[newCellId]->probes.size() >0) { 
 							for(int l=0; l < g_cells[newCellId]->probes.size(); l++) {
-								dist = vsDist(pAtom(nProbeID),pAtom(g_cells[newCellId]->probes[l]));
-								if( nProbeID != g_cells[newCellId]->probes[l] && dist > 0 && dist <= 2.8)  {
+								distSq = vsDistSq(pAtom(nProbeID),pAtom(g_cells[newCellId]->probes[l]));
+								if( nProbeID != g_cells[newCellId]->probes[l] && distSq > 0 && distSq <= nearProbeCutoffSq)  {
 									g_probes[nProbeID]->nearProbes.push_back(g_cells[newCellId]->probes[l]);
 								}
 							}
@@ -2264,6 +2268,7 @@ void insertClusterSetFinal( int step) {
 
 			}
 
+			return clusterId;
 		}
 
 		int GetTripleVertex(Vector3 Ri, Vector3 Rj, Vector3 Rk, Vector3* Rp1, Vector3* Rp2, double sgmi, double sgmj, double sgmk, double sgmp) {
@@ -2535,7 +2540,8 @@ void insertClusterSetFinal( int step) {
 
 			vector<int>::iterator it;
 
-			double dist;
+			const double nearAtomCutoffSq = 7.7 * 7.7;
+			double distSq;
 			g_gridMaxX = ceil((g_maxX-g_minX)/2);
 			g_gridMaxY = ceil((g_maxY-g_minY)/2);
 			g_gridMaxZ = ceil((g_maxZ-g_minZ)/2);
@@ -2568,8 +2574,8 @@ void insertClusterSetFinal( int step) {
 						if(newCellId >-1 && newCellId < g_gridMaxX*g_gridMaxY*g_gridMaxZ)
 							if(g_cells[newCellId]->atoms.size() >0) { 
 								for(int l=0; l < g_cells[newCellId]->atoms.size(); l++) {
-									dist = vsDist(prAtom(g_cells[g_atomCellList[i]]->atoms[j]),prAtom(g_cells[newCellId]->atoms[l]));
-									if(dist <= 7.7){ // g_probes-protein 3.8A * 2 and for checking bump
+									distSq = vsDistSq(prAtom(g_cells[g_atomCellList[i]]->atoms[j]),prAtom(g_cells[newCellId]->atoms[l]));
+									if(distSq <= nearAtomCutoffSq){ // g_probes-protein 3.8A * 2 and for checking bump
 										g_proteinAtoms[g_cells[g_atomCellList[i]]->atoms[j]]->nearAtoms.push_back(g_cells[newCellId]->atoms[l]);
 										count++;
 									}

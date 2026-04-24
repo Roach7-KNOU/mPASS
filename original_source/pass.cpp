@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 	}
 	readPdbFile(ifs); // read PDB file 
 
-	printf("REMARK Read PDB (protein (& cofactor if present) atoms) [%6d]: Min(x,y,z) : %8.3f %8.3f %8.3f Max(x,y,z) : %8.3f %8.3f %8.3f\n", g_proteinAtoms.size(),g_minX,g_minY,g_minZ,g_maxX,g_maxY,g_maxZ);
+	printf("REMARK Read PDB (protein (& cofactor if present) atoms) [%6zu]: Min(x,y,z) : %8.3f %8.3f %8.3f Max(x,y,z) : %8.3f %8.3f %8.3f\n", g_proteinAtoms.size(),g_minX,g_minY,g_minZ,g_maxX,g_maxY,g_maxZ);
 
 	begin = clock();
 	count = initializeCellList(); 
@@ -99,30 +99,30 @@ int main(int argc, char *argv[]) {
 	generateFirstLayer();
 	assignProbePair();
 	end = clock();
-	printf("REMARK [%5.2fs] 1st Layer Generation & Finding Near-Probe Pairs: [%d]\n",((double)(end-begin)) / CLOCKS_PER_SEC, g_probes.size());  
+	printf("REMARK [%5.2fs] 1st Layer Generation & Finding Near-Probe Pairs: [%zu]\n",((double)(end-begin)) / CLOCKS_PER_SEC, g_probes.size());  
 	
 	begin = clock();
 	probe_num = g_probes.size();
 	execDbscanClusteringFirst();
 	end = clock();
-	printf("REMARK [%5.2fs] Weeding Probes/BC Calculation ( < 0.7A) %5d -> %5d\n", ((double)(end-begin)) / CLOCKS_PER_SEC, probe_num, g_probes.size());
+	printf("REMARK [%5.2fs] Weeding Probes/BC Calculation ( < 0.7A) %5d -> %5zu\n", ((double)(end-begin)) / CLOCKS_PER_SEC, probe_num, g_probes.size());
 	
 	begin = clock();
 	probe_num = g_probes.size();
 	generateSubFirstLayer();
 	end = clock();
-	printf("REMARK [%5.2fs] 2nd Layer Generation/BC Calculation [%6d] : %6d -> %6d\n", ((double)(end-begin)) / CLOCKS_PER_SEC,g_probes.size()-probe_num,probe_num,g_probes.size());  
+	printf("REMARK [%5.2fs] 2nd Layer Generation/BC Calculation [%6d] : %6d -> %6zu\n", ((double)(end-begin)) / CLOCKS_PER_SEC,static_cast<int>(g_probes.size())-probe_num,probe_num,g_probes.size());  
 	
 	begin = clock();
 	probe_num = g_probes.size();
 	generateSubSecondLayer();
 	end = clock();
-	printf("REMARK [%5.2fs] 3rd Layer Generation/BC Calculation [%6d] : %6d -> %6d\n", ((double)(end-begin)) / CLOCKS_PER_SEC,g_probes.size()-probe_num,probe_num,g_probes.size());  
+	printf("REMARK [%5.2fs] 3rd Layer Generation/BC Calculation [%6d] : %6d -> %6zu\n", ((double)(end-begin)) / CLOCKS_PER_SEC,static_cast<int>(g_probes.size())-probe_num,probe_num,g_probes.size());  
 
 	probe_num = g_probes.size();
 	generateNextLayer();
 	end = clock();
-	printf("REMARK [%5.2fs] 4th and further Layer Generation [%6d] : %6d -> %6d \n", ((double)(end-begin)) / CLOCKS_PER_SEC,g_probes.size()-probe_num,probe_num,g_probes.size());  
+	printf("REMARK [%5.2fs] 4th and further Layer Generation [%6d] : %6d -> %6zu \n", ((double)(end-begin)) / CLOCKS_PER_SEC,static_cast<int>(g_probes.size())-probe_num,probe_num,g_probes.size());  
 
 
 	
@@ -150,11 +150,10 @@ int main(int argc, char *argv[]) {
 
 //	calculatePlb(0.65); 
 	end = clock();
-	printf("REMARK [%5.2fs] Total Execution time for %5d Protein Atoms\n",((double)(end-start)) / CLOCKS_PER_SEC,g_proteinAtoms.size() );
+	printf("REMARK [%5.2fs] Total Execution time for %5zu Protein Atoms\n",((double)(end-start)) / CLOCKS_PER_SEC,g_proteinAtoms.size() );
 	displayProbeAtom();
 }
 
 void usage() {
 	cout << "Usage : " << endl;
 }
-
