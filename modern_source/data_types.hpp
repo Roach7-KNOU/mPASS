@@ -99,7 +99,7 @@ struct Probe {
     std::string type;          // "C", "N", "O" for output
     double  radius{};
     bool    isSurvived{false};
-    bool    isPolar{false};
+    int     isPolar{};          // 0=apolar, 1=polar, 2+=metal/multi, 7=metal-contact
     double  charge{};
     int     numLayer{};        // generation layer (1 = first, 2 = second, …)
     int     clusterId{};

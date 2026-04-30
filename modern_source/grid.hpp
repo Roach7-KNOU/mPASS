@@ -142,4 +142,44 @@ inline void deduplicateProbeCellList(SimulationState& state) {
         state.probeCellList.end());
 }
 
+/// Rebuild probeCellList and grid probe-index lists from state.probes.
+/// Call this after probe compaction (weedOverlappingProbes) to ensure
+/// grid cells only reference valid, re-indexed probe indices.
+inline void rebuildProbeCellList(SimulationState& state, double cellSize = 2.0) {
+    for (auto& cell : state.cells)
+        cell.probeIndices.clear();
+    state.probeCellList.clear();
+    for (int i = 0; i < static_cast<int>(state.probes.size()); ++i)
+        insertProbeIntoGrid(state, i, cellSize);
+    deduplicateProbeCellList(state);
+}
+
+/// Populate ProteinAtom::neighborAtoms for all atoms (within 7.7 Å of each
+/// other).  Must be called after buildCellList().
+inline void buildAtomNeighborList(SimulationState& state, double cellSize = 2.0) {
+    const double cutoffSq = 7.7 * 7.7;
+    for (int i = 0; i < static_cast<int>(state.atoms.size()); ++i) {
+        state.atoms[i].neighborAtoms.clear();
+        int cid = cellIndexFor(state.atoms[i].position,
+                               state.minX, state.minY, state.minZ,
+                               state.gridMaxX, state.gridMaxY, state.gridMaxZ,
+                               cellSize);
+        if (cid < 0) continue;
+        for (const auto& gp : state.gridProperties) {
+            int nid = neighborCellId(cid, gp,
+                                     state.gridMaxX, state.gridMaxY, state.gridMaxZ);
+            if (nid < 0) continue;
+            for (int j : state.cells[nid].atomIndices) {
+                if (j == i) continue;
+                if (distanceSquared(state.atoms[i].position,
+                                    state.atoms[j].position) <= cutoffSq)
+                    state.atoms[i].neighborAtoms.push_back(j);
+            }
+        }
+        auto& na = state.atoms[i].neighborAtoms;
+        std::sort(na.begin(), na.end());
+        na.erase(std::unique(na.begin(), na.end()), na.end());
+    }
+}
+
 } // namespace mpass
