@@ -89,20 +89,29 @@ struct BuriednessResult {
 
 /// Check whether placing a probe at probePos clashes with any protein atom or
 /// existing probe (within their respective minimum distance thresholds).
-/// If accepted, fills in probe geometry fields.
+/// If accepted, fills in probe geometry fields including buriedness and
+/// surfaceCount.
 ///
-/// @param newProbe   Probe to test; position must already be set.
-/// @param state      Current simulation state.
-/// @param probeCutoff  Minimum probe–probe distance (1.0 Å for layers 1-3,
-///                     1.2 Å for outer layers).
-/// @param bcCutoffActive  When true, reject probes below g_bcCutoff.
+/// @param newProbe         Probe to test; position must already be set.
+/// @param state            Current simulation state.
+/// @param probeCutoff      Minimum probe–probe distance (1.0 Å for layers 2-3,
+///                         1.2 Å for layer 4+).
+/// @param bcCutoffActive   When true, reject probes below bcCutoff.
+/// @param useSurfaceBc     When true (layer 4+), filter uses buriedness +
+///                         surfaceCount*surfaceMultiplier.  When false (layers
+///                         2-3), only buriedness is used.
+/// @param surfaceMultiplier Weight applied to each qualifying surface atom
+///                         (1 for layers 2-3, 3 for layer 4+, matching the
+///                         original bumpcheckAtoms2/3 behaviour).
 /// @return true if the probe is accepted.
 [[nodiscard]] inline bool bumpCheckAndScore(
         Probe&                 newProbe,
         const SimulationState& state,
-        double                 probeCutoff     = 1.0,
-        bool                   bcCutoffActive  = false,
-        double                 cellSize        = 2.0) {
+        double                 probeCutoff       = 1.0,
+        bool                   bcCutoffActive    = false,
+        bool                   useSurfaceBc      = false,
+        int                    surfaceMultiplier = 1,
+        double                 cellSize          = 2.0) {
 
     int cellId = cellIndexFor(newProbe.position,
                               state.minX, state.minY, state.minZ,
@@ -115,6 +124,7 @@ struct BuriednessResult {
     int    contactCount  = 0;
     int    wholesaleBC   = 0;
     int    exactBC       = 0;
+    double surfaceCount  = 0.0;
 
     for (const auto& gp : state.gridProperties) {
         int nid = neighborCellId(cellId, gp,
@@ -123,6 +133,7 @@ struct BuriednessResult {
         const GridCell& cell = state.cells[nid];
 
         // ── Probe–probe bump check ──────────────────────────────────────────
+        // Only check cells close enough to contain a probe within probeCutoff
         if (gp.minDist <= 2.5 && !cell.probeIndices.empty()) {
             for (int pid : cell.probeIndices) {
                 double d = distance(newProbe.position, state.probes[pid].position);
@@ -132,6 +143,9 @@ struct BuriednessResult {
         }
 
         // ── Atom checks ────────────────────────────────────────────────────
+        const bool wholesaleCell = (gp.maxDist <= BC_DISTANCE_CUTOFF);
+        const bool surfaceCell   = wholesaleCell && (gp.minDist <= 10.0);
+
         for (int atomIdx : cell.atomIndices) {
             double d = distance(newProbe.position, state.atoms[atomIdx].position);
 
@@ -148,27 +162,34 @@ struct BuriednessResult {
                 ++contactCount;
             }
 
-            // BC counting
-            if (gp.maxDist <= BC_DISTANCE_CUTOFF) {
-                // Covered wholesale below
-            } else {
-                if (d <= BC_DISTANCE_CUTOFF) ++exactBC;
-            }
+            // Surface count: cells with max <= 14 Å and min <= 10 Å,
+            // atoms within 7 Å that are surface-exposed (low protein BC).
+            if (surfaceCell && d <= 7.0 &&
+                state.atoms[atomIdx].buriedness < state.bcCutoff)
+                surfaceCount += surfaceMultiplier;
+
+            // Exact BC count for straddle cells
+            if (!wholesaleCell && d <= BC_DISTANCE_CUTOFF)
+                ++exactBC;
         }
 
-        // Wholesale BC count
-        if (gp.maxDist <= BC_DISTANCE_CUTOFF) {
+        // Wholesale BC count for fully-inside cells
+        if (wholesaleCell)
             wholesaleBC += static_cast<int>(cell.atomIndices.size());
-        }
     }
 
     newProbe.closestAtomDist   = minDist;
     newProbe.averageAtomDist   = (contactCount > 0) ? totalDist / contactCount : 0.0;
     newProbe.averageAtomCount  = contactCount;
     newProbe.buriedness        = wholesaleBC + exactBC;
+    newProbe.surfaceCount      = surfaceCount;
 
-    if (bcCutoffActive && newProbe.buriedness < state.bcCutoff)
-        return false;
+    if (bcCutoffActive) {
+        double score = static_cast<double>(newProbe.buriedness)
+                     + (useSurfaceBc ? surfaceCount : 0.0);
+        if (score < state.bcCutoff)
+            return false;
+    }
 
     return true;
 }

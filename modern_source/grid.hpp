@@ -182,4 +182,41 @@ inline void buildAtomNeighborList(SimulationState& state, double cellSize = 2.0)
     }
 }
 
+/// Populate ProteinAtom::neighborProbes for all atoms.
+/// Finds probes within `cutoff` Å of each atom (scans up to `maxGridOffset`
+/// grid-property entries, matching the original assignAtomProbe behaviour).
+/// Must be called after probes are in the grid (insertProbeIntoGrid / rebuild).
+inline void buildAtomProbeNeighborList(SimulationState& state,
+                                       double cutoff         = 5.2,
+                                       int    maxGridOffset  = 275,
+                                       double cellSize       = 2.0) {
+    const double cutoffSq = cutoff * cutoff;
+    for (auto& atom : state.atoms)
+        atom.neighborProbes.clear();
+
+    for (int i = 0; i < static_cast<int>(state.atoms.size()); ++i) {
+        ProteinAtom& atom = state.atoms[i];
+        int cid = cellIndexFor(atom.position,
+                               state.minX, state.minY, state.minZ,
+                               state.gridMaxX, state.gridMaxY, state.gridMaxZ,
+                               cellSize);
+        if (cid < 0) continue;
+        int limit = std::min(maxGridOffset,
+                             static_cast<int>(state.gridProperties.size()));
+        for (int k = 0; k < limit; ++k) {
+            int nid = neighborCellId(cid, state.gridProperties[k],
+                                     state.gridMaxX, state.gridMaxY, state.gridMaxZ);
+            if (nid < 0) continue;
+            for (int probeIdx : state.cells[nid].probeIndices) {
+                if (distanceSquared(atom.position,
+                                    state.probes[probeIdx].position) <= cutoffSq)
+                    atom.neighborProbes.push_back(probeIdx);
+            }
+        }
+        auto& np = atom.neighborProbes;
+        std::sort(np.begin(), np.end());
+        np.erase(std::unique(np.begin(), np.end()), np.end());
+    }
+}
+
 } // namespace mpass

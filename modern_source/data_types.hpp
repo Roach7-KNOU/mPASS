@@ -20,8 +20,10 @@ inline constexpr double DIST_POLAR_METAL_MIN   = 2.2;
 inline constexpr double PROBE_RADIUS           = 0.7;
 inline constexpr double PROBE_RADIUS_APOLAR    = 1.6;
 inline constexpr double PROBE_RADIUS_POLAR     = DIST_POLAR_POLAR_MIN / 2.0;
+inline constexpr double PROBE_RADIUS_METAL     = DIST_POLAR_POLAR_MIN / 2.0;
+inline constexpr double RADIUS_INCREMENT       = 0.05;
 inline constexpr double BC_DISTANCE_CUTOFF     = 14.0;  // sphere radius for BC counting
-inline constexpr double MAX_LAYERS             = 30;
+inline constexpr int    MAX_LAYERS             = 30;
 
 // Polarity codes stored in AtomProperty::isPolar
 enum class Polarity : int { Apolar = 0, Polar = 1, Metal = 2 };
